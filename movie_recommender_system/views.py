@@ -9,7 +9,7 @@ from sklearn.neighbors import NearestNeighbors
 
 
 class ItemBased(APIView):
-    def get(self, request):
+    def post(self, request):
         movieName = request.data['movie_name']
         try:
             rates = pd.read_csv('./movie_recommender_system/files/ratings.csv')
@@ -22,18 +22,18 @@ class ItemBased(APIView):
                 ratedmovies = pd.merge(rates, movies, on='movieId')
                 df_movie_users_series = int(list(movies.loc[movies['title'] == movie_name]['movieId'])[0])
 
-                def get_other_movies(movie_name):
-                    # get all users who watched a specific movie
-                    df_movie_users = pd.DataFrame(df_movie_users_series, columns=['userId'])
-                    other_movies = pd.merge(df_movie_users, ratedmovies, on='userId')
-                    other_users_watched = pd.DataFrame(other_movies.groupby('title')['userId'].count()).sort_values(
-                        'userId',
-                        ascending=False)
-                    other_users_watched['perc_who_watched'] = round(
-                        other_users_watched['userId'] * 100 / other_users_watched['userId'][0], 1)
-                    return other_users_watched[:10]
-
-                get_other_movies(movieName)
+                # def get_other_movies(movie_name):
+                #     # get all users who watched a specific movie
+                #     df_movie_users = pd.DataFrame(df_movie_users_series, columns=['userId'])
+                #     other_movies = pd.merge(df_movie_users, ratedmovies, on='userId')
+                #     other_users_watched = pd.DataFrame(other_movies.groupby('title')['userId'].count()).sort_values(
+                #         'userId',
+                #         ascending=False)
+                #     other_users_watched['perc_who_watched'] = round(
+                #         other_users_watched['userId'] * 100 / other_users_watched['userId'][0], 1)
+                #     return other_users_watched[:10]
+                #
+                # get_other_movies(movieName)
                 # only include movies with more than 10 ratings
                 avg_movie_rating = pd.DataFrame(rates.groupby('movieId')['rating'].agg(['mean', 'count']))
                 avg_movie_rating['movieId'] = avg_movie_rating.index
@@ -59,9 +59,11 @@ class ItemBased(APIView):
                             print('Recommendations for {0}\n'.format(get_movie))
                         else:
                             indices_flat = indices.flatten()[i]
+
                             get_movie = (
                                 list(movies.loc[movies['movieId'] == movie_wide.iloc[indices_flat, :].name]['title']))
-                            final[i] = get_movie[0]
+                            x = int(list(movies.loc[movies['title'] == get_movie[0]]['movieId'])[0])
+                            final[x] = get_movie[0]
                     print(final)
                     return final
 
@@ -75,7 +77,7 @@ class ItemBased(APIView):
 
 
 class GetMovie(APIView):
-    def get(self, request):
+    def post(self, request):
         try:
             info = {}
             movies = pd.read_csv('./movie_recommender_system/files/movies.csv')
